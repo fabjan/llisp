@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <script>
+        function test(name, expect, got) {
+            console.assert(JSON.stringify(expect) == JSON.stringify(got), name, got, 'should equal', expect);
+        }
+
+        // Based heavily on https://github.com/maryrosecook/littlelisp
+        // see copyright notice below.
+
+        function lex(s) {
+            // TODO this can be simplified
+            return s.split('"')
+                .map(function(x, i) {
+                    if (i % 2 === 0) {
+                        return x.replace(/\(/g, ' ( ')
+                            .replace(/\)/g, ' ) ');
+                    } else {
+                        return x.replace(/ /g, '!whitespace!');
+                    }
+                })
+                .join('"')
+                .trim()
+                .split(/\s+/)
+                .map(function(x) {
+                    return x.replace(/!whitespace!/g, " ");
+                });
+        };
+        test('lex works', ['(', '+', '1', '"foo"', '(', 'bar', ')', ')'],
+            lex('(+ 1 "foo" (bar))'));
+
+
+        function parse(tokens, ast) {
+            const token = tokens.shift();
+            if (token === undefined) {
+                return ast.pop();
+            }
+            if (token === '(') {
+                ast.push(parse(tokens, []));
+                return parse(tokens, ast);
+            }
+            if (token === ')') {
+                return ast;
+            }
+            let value = token;
+            if (!isNaN(Number(token))) {
+                value = Number(token)
+            }
+            return parse(tokens, ast.concat(value));
+        };
+        test('parse works', ['+', 1, '"foo"', ['bar']],
+            parse(['(', '+', '1', '"foo"', '(', 'bar', ')', ')'], []));
+
+
+        function read(s) {
+            return parse(lex(s), []);
+        };
+        test('read works', ['+', 1, '"foo"', ['bar']],
+            read('(+ 1 "foo" (bar))'));
+
+
+        function print(form) {
+            if (form instanceof Array) {
+                return '(' + (form.map(print).join(' ')) + ')';
+            }
+            if (form instanceof Function) {
+                return '<function>';
+            }
+            return form;
+        };
+        test('print works', '(+ 1 "foo" (bar))',
+            print(['+', 1, '"foo"', ['bar']]));
+
+
+        function Environment(init, outer) {
+            this.defs = init || {};
+            this.outer = outer;
+            this.set = function(symbol, value) {
+                this.defs[symbol] = value;
+            };
+            this.get = function(symbol) {
+                if (symbol in this.defs) {
+                    return this.defs[symbol];
+                }
+                if (this.outer !== undefined) {
+                    return this.outer.get(symbol);
+                }
+            };
+        };
+
+        function eval(expr, env) {
+            // lists are applied
+            if (expr instanceof Array) {
+                return apply(expr, env);
+            }
+            // symbols are strings without quotes
+            if (typeof expr === 'string' && expr[0] !== '"') {
+                return env.get(expr);
+            }
+            return expr;
+        };
+
+        function apply(list, env) {
+            let head = list[0];
+            let tail = list.slice(1);
+            if (head in specialForms) {
+                return specialForms[head](rest, env);
+            }
+            head = eval(head, env);
+            if (head instanceof Function) {
+                tail = tail.map(e => eval(e, env));
+                return head(...tail);
+            }
+        }
+
+        const specialForms = {
+            if: function(ast, env) {
+                if (eval(ast[0], env))
+                    return eval(ast[1], env);
+                return eval(ast[2], env);
+            },
+
+            let: function(ast, env) {
+                env = new Environment({}, env);
+                ast[0].forEach(pair => {
+                    env.set(pair[0], eval(pair[1], env));
+                });
+                return eval(ast[1], env);
+            },
+
+            fn: function(ast, env) {
+                return function(...args) {
+                    env = new Environment({}, env);
+                    ast[0].forEach((a, i) => {
+                        env.set(a, args[i]);
+                    });
+                    return eval(ast[1], env);
+                };
+            },
+        };
+
+        const primitives = {
+            car: function(list) {
+                return list[0];
+            },
+            cdr: function(list) {
+                return list.slice(1);
+            },
+            println: function(x) {
+                (consoleLog || console.log)(x); // consoleLog can be "injected"
+                return null;
+            },
+            '+': function(...args) {
+                return args.reduce((acc, x) => acc + x);
+            },
+        };
+    </script>
+
+    <script>
+        function consoleLog(line) {
+            const prompt = document.querySelector('#prompt');
+            const logRow = document.createElement('pre');
+            logRow.setAttribute('class', 'console');
+            logRow.innerText = line;
+            prompt.parentNode.insertBefore(logRow, prompt);
+        }
+
+        document.onreadystatechange = function() {
+            if (document.readyState === 'interactive') {
+                consoleLog('------------------------------------------------');
+                consoleLog('Welcome to llisp, goober!');
+                consoleLog('  Special: ' + Object.keys(specialForms).join(' '));
+                consoleLog('  Primitive: ' + Object.keys(primitives).join(' '));
+                consoleLog('------------------------------------------------');
+                const readline = document.querySelector('#readline');
+                const replEnv = new Environment(primitives);
+                window.onkeypress = function(ev) {
+                    if (ev.key === 'Enter') {
+                        const line = readline.textContent;
+                        const expr = read(line);
+                        const value = eval(expr, replEnv);
+                        const result = print(value);
+                        readline.textContent = '';
+                        consoleLog(' ' + line + ' => ' + result);
+                    }
+                };
+                readline.focus()
+            }
+        };
+    </script>
+
+    <style>
+        body {
+            background-color: #1e1e27;
+        }
+        
+        .console {
+            color: #cfbfad;
+            font-family: monospace;
+            margin: 0;
+        }
+        
+        .console span {
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="console" id="prompt">
+        <span>&gt;</span><span contenteditable="true" id="readline"></span>
+    </div>
+    <!--
+        Copyright 2021 Fabian Bergström
+
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+
+        The above copyright notice and this permission notice shall be included in
+        all copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+        THE SOFTWARE.
+    -->
+    <!---->
+    <!--
+        The MIT License (MIT)
+        
+        Copyright (c) 2013-2014 Mary Rose Cook and contributors
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in
+        all copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+        THE SOFTWARE.
+    -->
+</body>
+
+</html>
