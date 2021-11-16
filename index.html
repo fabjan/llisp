@@ -11,6 +11,9 @@
         // Based heavily on https://github.com/maryrosecook/littlelisp
         // see copyright notice below.
 
+        test('lex example', ['(', '+', '1', '"foo"', '(', 'bar', ')', ')'],
+            lex('(+ 1 "foo" (bar))'));
+
         function lex(chars) {
             const tokens = [];
             let currToken = [];
@@ -42,9 +45,9 @@
             collectToken();
             return tokens;
         }
-        test('lex works', ['(', '+', '1', '"foo"', '(', 'bar', ')', ')'],
-            lex('(+ 1 "foo" (bar))'));
 
+        test('parse example', ['+', 1, '"foo"', ['bar']],
+            parse(['(', '+', '1', '"foo"', '(', 'bar', ')', ')'], []));
 
         function parse(tokens, ast) {
             const token = tokens.shift();
@@ -64,16 +67,18 @@
             }
             return parse(tokens, ast.concat(value));
         };
-        test('parse works', ['+', 1, '"foo"', ['bar']],
-            parse(['(', '+', '1', '"foo"', '(', 'bar', ')', ')'], []));
 
+
+        test('read example', ['+', 1, '"foo"', ['bar']],
+            read('(+ 1 "foo" (bar))'));
 
         function read(s) {
             return parse(lex(s), []);
         };
-        test('read works', ['+', 1, '"foo"', ['bar']],
-            read('(+ 1 "foo" (bar))'));
 
+
+        test('print example', '(+ 1 "foo" (bar))',
+            print(['+', 1, '"foo"', ['bar']]));
 
         function print(form) {
             if (form instanceof Array) {
@@ -84,8 +89,6 @@
             }
             return form;
         };
-        test('print works', '(+ 1 "foo" (bar))',
-            print(['+', 1, '"foo"', ['bar']]));
 
 
         function Environment(init, outer) {
