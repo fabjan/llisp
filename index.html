@@ -90,6 +90,9 @@
             return form;
         };
 
+        test('read-print bijection', '(+ 1 "foo" (bar))',
+            print(read('              (+ 1 "foo" (bar))')));
+
 
         function Environment(init, outer) {
             this.defs = init || {};
