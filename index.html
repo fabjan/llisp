@@ -7,6 +7,9 @@
         // Based heavily on https://github.com/maryrosecook/littlelisp
         // see copyright notice below.
 
+        //
+        // lex turns a string into a list of tokens
+        //
         test('lex example')
             .expect(lex('(+ 1 "foo" (bar))'))
             .equals(['(', '+', '1', '"foo"', '(', 'bar', ')', ')']);
@@ -44,6 +47,11 @@
         }
 
 
+        //
+        // parse turns a list of tokens into an abstract syntax tree
+        //  - the tree is an atom or a list, lists can contain atoms or lists
+        //  - atoms are numbers, symbols or strings
+        //
         test('parse example')
             .expect(parse(['(', '+', '1', '"foo"', '(', 'bar', ')', ')'], []))
             .equals(['+', 1, '"foo"', ['bar']])
@@ -67,7 +75,9 @@
             return parse(tokens, ast.concat(value));
         };
 
-
+        //
+        // read turns a string into an abstract syntax tree
+        //
         test('read example')
             .expect(read('(+ 1 "foo" (bar))'))
             .equals(['+', 1, '"foo"', ['bar']]);
@@ -77,6 +87,9 @@
         };
 
 
+        //
+        // print turns an abstract syntax tree into a string
+        //
         test('print example')
             .expect(print(['+', 1, '"foo"', ['bar']]))
             .equals('(+ 1 "foo" (bar))');
@@ -91,11 +104,20 @@
             return form;
         };
 
+        //
+        // print and read are inverted
+        //
         test('read-print bijection')
-            .expect(print(read('              (+ 1 "foo" (bar))')))
+            .expect(print(read('(+ 1 "foo" (bar))')))
+            .equals('(+ 1 "foo" (bar))');
+        test('read-print bijection x 1000')
+            .expect(Array(1000).fill([read, print]).flat().reduce((acc, f) => f(acc), '(+ 1 "foo" (bar))'))
             .equals('(+ 1 "foo" (bar))');
 
 
+        // 
+        // Environment is a map from symbols to values, can be nested
+        //
         function Environment(init, outer) {
             this.defs = init || {};
             this.outer = outer;
@@ -113,18 +135,28 @@
         };
 
 
-        function eval(expr, env) {
+        //
+        // eval turns an abstract syntax tree into a (possibly new) value, in a given environment
+        //  - lists are "applied", see apply
+        //  - symbols are looked up in the environment
+        //
+        function eval(ast, env) {
             // lists are applied
-            if (expr instanceof Array) {
-                return apply(expr, env);
+            if (ast instanceof Array) {
+                return apply(ast, env);
             }
             // symbols are strings without quotes
-            if (typeof expr === 'string' && expr[0] !== '"') {
-                return env.get(expr);
+            if (typeof ast === 'string' && ast[0] !== '"') {
+                return env.get(ast);
             }
-            return expr;
+            return ast;
         };
 
+        //
+        // apply applies the head of a list as a function with the tail as arguments
+        //  - special forms receive the arguments unevaluated
+        //  - functions receive the arguments evaluated
+        //
         function apply(list, env) {
             let head = list[0];
             let tail = list.slice(1);
@@ -139,6 +171,9 @@
         }
 
 
+        //
+        // special forms have mystical powers
+        //
         const specialForms = {
             if: function(ast, env) {
                 if (eval(ast[0], env))
@@ -166,6 +201,9 @@
         };
 
 
+        //
+        // primitives are functions provided by the "platform" which could not be implemented i llisp itself
+        //
         const primitives = {
             car: function(list) {
                 return list[0];
@@ -246,8 +284,8 @@
                     if (ev.key === 'Enter') {
                         const line = readline.textContent;
                         try {
-                            const expr = read(line);
-                            const value = eval(expr, replEnv);
+                            const ast = read(line);
+                            const value = eval(ast, replEnv);
                             const result = print(value);
                             consoleLog(' ' + line + ' => ' + result);
                         } catch (err) {
