@@ -182,14 +182,39 @@
             },
         };
 
+
+        function banner() {
+            const list = obj => Object.keys(obj).join(' ');
+            primitives.println("db      db      d888888b .d8888. d8888b.");
+            primitives.println("88      88        `88'   88'  YP 88  `8D");
+            primitives.println("88      88         88    `8bo.   88oodD'");
+            primitives.println("88      88         88      `Y8b. 88~~~  ");
+            primitives.println("88booo. 88booo.   .88.   db   8D 88     ");
+            primitives.println("Y88888P Y88888P YGOOBERP `8888Y' 88     ");
+            primitives.println("                                        ");
+            primitives.println("  Welcome to llisp!                     ");
+            primitives.println("                                        ");
+            primitives.println(`    Special:   ${list(specialForms)}    `);
+            primitives.println(`    Primitive: ${list(primitives)}      `);
+            primitives.println("                                        ");
+        }
+
+
+        //
+        // test code please ignore
+        //
         function test(description) {
+            const t0 = performance.now();
             return {
                 expect: got => ({
                     equals: want => {
+                        console.log('testing ' + description);
                         console.assert(
                             JSON.stringify(want) == JSON.stringify(got),
                             description, got, 'should equal', want
                         );
+                        const t = Math.round(performance.now() - t0);
+                        console.log('OK' + ((10 < t) ? ` (${t}ms)` : ''));
                     }
                 })
             };
@@ -197,6 +222,9 @@
     </script>
 
     <script>
+        //
+        // print a string to the page "console"
+        //
         function consoleLog(line) {
             const prompt = document.querySelector('#prompt');
             const logRow = document.createElement('pre');
@@ -209,19 +237,7 @@
 
             if (document.readyState === 'interactive') {
 
-                const list = obj => Object.keys(obj).join(' ');
-                consoleLog("db      db      d888888b .d8888. d8888b.");
-                consoleLog("88      88        `88'   88'  YP 88  `8D");
-                consoleLog("88      88         88    `8bo.   88oodD'");
-                consoleLog("88      88         88      `Y8b. 88~~~  ");
-                consoleLog("88booo. 88booo.   .88.   db   8D 88     ");
-                consoleLog("Y88888P Y88888P YGOOBERP `8888Y' 88     ");
-                consoleLog("                                        ");
-                consoleLog("  Welcome to llisp!                     ");
-                consoleLog("                                        ");
-                consoleLog(`    Special:   ${list(specialForms)}    `);
-                consoleLog(`    Primitive: ${list(primitives)}      `);
-                consoleLog("                                        ");
+                banner();
 
                 const readline = document.querySelector('#readline');
                 const replEnv = new Environment(primitives);
