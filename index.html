@@ -126,7 +126,7 @@
             let head = list[0];
             let tail = list.slice(1);
             if (head in specialForms) {
-                return specialForms[head](rest, env);
+                return specialForms[head](tail, env);
             }
             head = eval(head, env);
             if (head instanceof Function) {
