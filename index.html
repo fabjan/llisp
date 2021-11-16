@@ -185,7 +185,9 @@
         }
 
         document.onreadystatechange = function() {
+
             if (document.readyState === 'interactive') {
+
                 const list = obj => Object.keys(obj).join(' ');
                 consoleLog("db      db      d888888b .d8888. d8888b.");
                 consoleLog("88      88        `88'   88'  YP 88  `8D");
@@ -199,8 +201,10 @@
                 consoleLog(`    Special:   ${list(specialForms)}    `);
                 consoleLog(`    Primitive: ${list(primitives)}      `);
                 consoleLog("                                        ");
+
                 const readline = document.querySelector('#readline');
                 const replEnv = new Environment(primitives);
+
                 window.onkeypress = function(ev) {
                     if (ev.key === 'Enter') {
                         const line = readline.textContent;
@@ -215,7 +219,8 @@
                         readline.textContent = '';
                     }
                 };
-                readline.focus()
+
+                readline.focus();
             }
         };
     </script>
