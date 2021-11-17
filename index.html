@@ -166,25 +166,20 @@
         //
         const specialForms = {
             if: function(ast, env) {
-                if (eval(ast[0], env))
-                    return eval(ast[1], env);
+                if (eval(ast[0], env)) return eval(ast[1], env);
                 return eval(ast[2], env);
             },
 
             let: function(ast, env) {
                 env = new Environment({}, env);
-                ast[0].forEach(pair => {
-                    env.set(pair[0], eval(pair[1], env));
-                });
+                ast[0].forEach(([param, arg]) => env.set(param, eval(arg, env)));
                 return eval(ast[1], env);
             },
 
             fn: function(ast, env) {
                 return function(...args) {
                     env = new Environment({}, env);
-                    ast[0].forEach((a, i) => {
-                        env.set(a, args[i]);
-                    });
+                    ast[0].forEach((param, i) => env.set(param, args[i]));
                     return eval(ast[1], env);
                 };
             },
