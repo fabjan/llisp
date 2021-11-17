@@ -190,25 +190,12 @@
         // primitives are functions provided by the "platform" which could not be implemented i llisp itself
         //
         const primitives = {
-            car: function(list) {
-                return list[0];
-            },
-            cdr: function(list) {
-                return list.slice(1);
-            },
-            println: function(x) {
-                (consoleLog || console.log)(x); // consoleLog can be "injected"
-                return null;
-            },
-            '+': function(...args) {
-                return args.reduce((acc, x) => acc + x);
-            },
-            thanks: function() {
-                return '"Thanks, Mary Rose Cook: https://github.com/maryrosecook/littlelisp"';
-            },
-            c: function() {
-                return '"llisp is (c) Fabian Bergström 2021, https://opensource.org/licenses/MIT"';
-            },
+            c: () => '"llisp is (c) Fabian Bergström 2021, https://opensource.org/licenses/MIT"',
+            thanks: () => '"Thanks, Mary Rose Cook: https://github.com/maryrosecook/littlelisp"',
+            car: (list) => list[0],
+            cdr: (list) => list.slice(1),
+            '+': (...args) => args.reduce((acc, x) => acc + x),
+            println: (x) => (consoleLog || console.log)(x), // consoleLog can be "injected"
         };
 
 
