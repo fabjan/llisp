@@ -165,23 +165,21 @@
         // special forms have mystical powers
         //
         const specialForms = {
-            if: function(ast, env) {
-                if (eval(ast[0], env)) return eval(ast[1], env);
-                return eval(ast[2], env);
+            if: ([cond, then, otherwise], env) => {
+                if (eval(cond, env)) return eval(then, env);
+                return eval(otherwise, env);
             },
 
-            let: function(ast, env) {
-                env = new Environment({}, env);
-                ast[0].forEach(([param, arg]) => env.set(param, eval(arg, env)));
-                return eval(ast[1], env);
+            let: ([bindings, body], env) => {
+                const letEnv = new Environment({}, env);
+                bindings.forEach(([param, arg]) => letEnv.set(param, eval(arg, letEnv)));
+                return eval(body, letEnv);
             },
 
-            fn: function(ast, env) {
-                return function(...args) {
-                    env = new Environment({}, env);
-                    ast[0].forEach((param, i) => env.set(param, args[i]));
-                    return eval(ast[1], env);
-                };
+            fn: ([bindings, body], env) => (...args) => {
+                const callEnv = new Environment({}, env);
+                bindings.forEach((param, i) => callEnv.set(param, args[i]));
+                return eval(body, callEnv);
             },
         };
 
