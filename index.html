@@ -58,20 +58,10 @@
 
         function parse(tokens, ast) {
             const token = tokens.shift();
-            if (token === undefined) {
-                return ast.pop();
-            }
-            if (token === '(') {
-                ast.push(parse(tokens, []));
-                return parse(tokens, ast);
-            }
-            if (token === ')') {
-                return ast;
-            }
-            let value = token;
-            if (!isNaN(Number(token))) {
-                value = Number(token)
-            }
+            if (token === undefined) return ast.pop();
+            if (token === '(') return parse(tokens, ast.concat([parse(tokens, [])]));
+            if (token === ')') return ast;
+            const value = isNaN(Number(token)) ? token : Number(token);
             return parse(tokens, ast.concat(value));
         };
 
