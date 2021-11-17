@@ -238,13 +238,13 @@
             return {
                 expect: got => ({
                     equals: want => {
+                        const t = Math.round(performance.now() - t0);
                         console.log('testing ' + description);
                         console.assert(
                             JSON.stringify(want) == JSON.stringify(got),
                             description, got, 'should equal', want
-                        );
-                        const t = Math.round(performance.now() - t0);
-                        console.log('OK' + ((10 < t) ? ` (${t}ms)` : ''));
+                        )
+                        if (10 < t) console.log(`(${t}ms)`);
                     }
                 })
             };
