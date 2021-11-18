@@ -138,9 +138,7 @@
         //  - special forms receive the arguments unevaluated
         //  - functions receive the arguments evaluated
         //
-        function apply(list, env) {
-            let head = list[0];
-            let tail = list.slice(1);
+        function apply([head, ...tail], env) {
             if (head in specialForms) {
                 return specialForms[head](tail, env);
             }
