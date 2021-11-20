@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <script>
-        // Based heavily on https://github.com/maryrosecook/littlelisp
+        // Based on https://github.com/maryrosecook/littlelisp
         // see copyright notice below.
 
         //
@@ -176,11 +176,17 @@
                 return eval(body, letEnv);
             },
 
-            fn: ([bindings, body], env) => (...args) => {
+            fn: ([params, body], env) => (...args) => {
                 const callEnv = new Environment({}, env);
-                bindings.forEach((param, i) => callEnv.set(param, args[i]));
+                params.forEach((param, i) => callEnv.set(param, args[i]));
                 return eval(body, callEnv);
             },
+
+            def: ([symbol, ast], env) => {
+                env.set(symbol, eval(ast, env));
+            },
+
+            quote: ([value]) => value,
         }
 
 
