@@ -17,24 +17,25 @@
         function lex(chars) {
             const tokens = [];
             let currToken = [];
-            let insideString = false;
+            let inQuotes = false;
 
-            function pushCurrToken(andExtraToken) {
+            function pushCurrToken() {
                 if (0 < currToken.length) tokens.push(currToken.join(''));
-                if (andExtraToken !== undefined) tokens.push(andExtraToken);
                 currToken = [];
             }
 
-            const isWholeToken = (c) => 0 <= "()".indexOf(c);
+            const isSpace = (c) => (0 <= " \t".indexOf(c));
+            const isWholeToken = (c) => (0 <= "()".indexOf(c));
 
             for (const char of chars) {
-                if (char == '"') insideString = !insideString;
-                if (!insideString && char === ' ') pushCurrToken();
-                else if (!insideString && isWholeToken(char)) pushCurrToken(char);
+                if (char == '"') inQuotes = !inQuotes;
+
+                if (!inQuotes && isSpace(char)) pushCurrToken();
+                else if (!inQuotes && isWholeToken(char)) pushCurrToken(), tokens.push(char);
                 else currToken.push(char);
             }
 
-            if (insideString) throw new Error('bad string');
+            if (inQuotes) throw new Error('bad string');
             pushCurrToken();
             return tokens;
         }
