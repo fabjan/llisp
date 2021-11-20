@@ -56,11 +56,13 @@
 
             function nextForm() {
                 switch (peek()) {
+                    case ')':
+                        throw new Error("unexpected ')'");
                     case '(':
-                        next(); // drop '('
+                        next();
                         const list = [];
-                        while (peek() !== ')') list.push(nextForm());
-                        next(); // drop ')'
+                        while (peek() && peek() !== ')') list.push(nextForm());
+                        if (next() === undefined) throw new Error("unclosed '(");
                         return list;
                     default:
                         return isNaN(Number(peek())) ? next() : Number(next());
