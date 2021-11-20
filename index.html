@@ -192,7 +192,9 @@
             thanks: () => '"Thanks, Mary Rose Cook: https://github.com/maryrosecook/littlelisp"',
             car: (list) => list[0],
             cdr: (list) => list.slice(1),
+            '=': (a, b) => a === b,
             '+': (...args) => args.reduce((acc, x) => acc + x),
+            '-': (...args) => args.reduce((acc, x) => acc - x),
             println: (x) => (consoleLog || console.log)(x), // consoleLog can be "injected"
         };
 
