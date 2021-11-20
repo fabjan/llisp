@@ -115,19 +115,13 @@
         // 
         // Environment is a map from symbols to values, can be nested
         //
-        function Environment(init, outer) {
-            this.defs = init || {};
-            this.outer = outer;
-            this.set = function(symbol, value) {
-                this.defs[symbol] = value;
+        function Environment(defs = {}, outer) {
+            this.set = (symbol, value) => {
+                defs[symbol] = value;
             };
-            this.get = function(symbol) {
-                if (symbol in this.defs) {
-                    return this.defs[symbol];
-                }
-                if (this.outer !== undefined) {
-                    return this.outer.get(symbol);
-                }
+            this.get = (symbol) => {
+                if (symbol in defs) return defs[symbol];
+                if (outer !== undefined) return outer.get(symbol);
             };
         }
 
