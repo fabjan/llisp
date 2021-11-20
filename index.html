@@ -47,14 +47,14 @@
             .expect(parse(['(', '+', '1', '"foo"', '(', 'bar', ')', ')'], []))
             .equals(['+', 1, '"foo"', ['bar']])
 
-        function parse(tokens, ast) {
+        function parse(tokens, ast = []) {
             const token = tokens.shift();
             if (token === undefined) return ast.pop();
             if (token === '(') return parse(tokens, ast.concat([parse(tokens, [])]));
             if (token === ')') return ast;
             const value = isNaN(Number(token)) ? token : Number(token);
             return parse(tokens, ast.concat(value));
-        };
+        }
 
         //
         // read turns a string into an abstract syntax tree
@@ -64,8 +64,8 @@
             .equals(['+', 1, '"foo"', ['bar']]);
 
         function read(s) {
-            return parse(lex(s), []);
-        };
+            return parse(lex(s));
+        }
 
 
         //
@@ -83,7 +83,7 @@
                 return '<function>';
             }
             return form;
-        };
+        }
 
         //
         // print and read are inverted
@@ -91,8 +91,8 @@
         test('read-print bijection')
             .expect(print(read('(+ 1 "foo" (bar))')))
             .equals('(+ 1 "foo" (bar))');
-        test('read-print bijection x 1000')
-            .expect(Array(1000).fill([read, print]).flat().reduce((acc, f) => f(acc), '(+ 1 "foo" (bar))'))
+        test('read-print bijection x 10')
+            .expect(Array(10).fill([read, print]).flat().reduce((acc, f) => f(acc), '(+ 1 "foo" (bar))'))
             .equals('(+ 1 "foo" (bar))');
 
 
@@ -113,7 +113,7 @@
                     return this.outer.get(symbol);
                 }
             };
-        };
+        }
 
 
         //
@@ -131,7 +131,7 @@
                 return env.get(ast);
             }
             return ast;
-        };
+        }
 
         //
         // apply applies the head of a list as a function with the tail as arguments
