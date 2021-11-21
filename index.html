@@ -297,7 +297,12 @@
 
             if (document.readyState === 'interactive') {
 
-                [pluginMetaPrimitives, pluginExtendedQuoting, pluginMacros, pluginControlFlow]
+                [
+                    pluginMetaPrimitives,
+                    pluginExtendedQuoting,
+                    pluginMacros,
+                    //pluginControlFlow,
+                ]
                 .forEach(plugin => {
                     const pluginName = plugin.name.replace(/^plugin/, '');
                     const enabled = localStorage.getItem(pluginName) === 'true';
