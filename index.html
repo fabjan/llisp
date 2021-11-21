@@ -289,10 +289,18 @@
     <style>
         body {
             background-color: #1e1e27;
+            color: #cfbfad;
+        }
+        
+        #toolbar {
+            padding: 4px 0px;
+        }
+        
+        #toolbar input {
+            margin: 0px 4px 0px 10px;
         }
         
         .console {
-            color: #cfbfad;
             font-family: monospace;
             margin: 0;
         }
@@ -304,6 +312,8 @@
 </head>
 
 <body>
+    <div id="toolbar"></div>
+    <hr>
     <div class="console" id="prompt">
         <span>&gt;</span><span contenteditable="true" id="readline"></span>
     </div>
