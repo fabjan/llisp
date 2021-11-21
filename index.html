@@ -48,7 +48,7 @@
         //
         test('parse example')
             .expect(parse(['(', '+', '1', '"foo"', '(', 'bar', ')', ')'], []))
-            .equals(['+', 1, '"foo"', ['bar']])
+            .equals(['+', 1, '"foo"', ['bar']]);
 
         function parse(tokens) {
             const peek = () => tokens[0];
