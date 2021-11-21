@@ -30,7 +30,8 @@
             }
 
             const isSpace = (c) => (0 <= " \t\r\n".indexOf(c));
-            const isWholeToken = (c) => (0 <= "()[]{}`',@".indexOf(c));
+            const singleCharTokens = "()[]{}`',@";
+            const isWholeToken = (c) => (0 <= singleCharTokens.indexOf(c));
 
             for (const char of chars) {
                 if (char == '"') inQuotes = !inQuotes;
@@ -170,7 +171,7 @@
 
 
         //
-        // special forms have mystical powers
+        // special forms have mystical powers, they can do anything
         //
         Object.assign(specialForms, {
             if: ([cond, then, otherwise], env) => {
