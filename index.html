@@ -7,6 +7,11 @@
         // Based on https://github.com/maryrosecook/littlelisp
         // see copyright notice below.
 
+        // these are filled in below
+        const readerMacros = {};
+        const specialForms = {};
+        const primitives = {};
+
         //
         // lex turns a string into a list of tokens
         //
@@ -55,6 +60,9 @@
             const next = () => tokens.shift();
 
             function nextForm() {
+                if (readerMacros[peek()]) {
+                    return readerMacros[next()](nextForm());
+                }
                 switch (peek()) {
                     case ')':
                         throw new Error("unexpected ')'");
@@ -131,7 +139,7 @@
         //  - lists are "applied", see apply
         //  - symbols are looked up in the environment
         //
-        function eval(ast, env) {
+        let eval = (ast, env) => {
             // lists are applied
             if (ast instanceof Array) {
                 return apply(ast, env);
@@ -141,7 +149,7 @@
                 return env.get(ast);
             }
             return ast;
-        }
+        };
 
 
         //
@@ -156,7 +164,7 @@
             head = eval(head, env);
             if (head instanceof Function) {
                 tail = tail.map(e => eval(e, env));
-                return head(...tail);
+                return head(tail, env);
             }
         }
 
@@ -164,7 +172,7 @@
         //
         // special forms have mystical powers
         //
-        const specialForms = {
+        Object.assign(specialForms, {
             if: ([cond, then, otherwise], env) => {
                 if (eval(cond, env)) return eval(then, env);
                 return eval(otherwise, env);
@@ -187,23 +195,26 @@
             },
 
             quote: ([value]) => value,
-        }
+        });
 
 
         //
-        // primitives are functions provided by the "platform" which could not be implemented i llisp itself
+        // primitives are functions that cannot not be implemented i llisp itself
         //
-        const primitives = {
-            c: () => '"llisp is (c) Fabian Bergström 2021, https://opensource.org/licenses/MIT"',
-            thanks: () => '"Thanks, Mary Rose Cook: https://github.com/maryrosecook/littlelisp"',
-            car: (list) => list[0],
-            cdr: (list) => list.slice(1),
-            '=': (a, b) => a === b,
-            '+': (...args) => args.reduce((acc, x) => acc + x),
-            '-': (...args) => args.reduce((acc, x) => acc - x),
-            println: (x) => (consoleLog || console.log)(x), // consoleLog can be "injected"
-        };
+        Object.assign(primitives, {
+            // logic
+            '=': ([a, b]) => a === b,
+            not: ([x]) => !x,
 
+            // math
+            '+': args => args.reduce((acc, x) => acc + x),
+            '-': args => args.reduce((acc, x) => acc - x),
+
+            // lists
+            car: ([list]) => list[0],
+            cdr: ([list]) => list.slice(1),
+            cons: ([head, tail]) => [head].concat(tail),
+        });
 
         function getBanner() {
             const list = obj => Object.keys(obj).join(' ');
@@ -245,6 +256,11 @@
         }
     </script>
 
+    <script src="./meta.js"></script>
+    <script src="./quoting.js"></script>
+    <script src="./macros.js"></script>
+    <script src="./controlflow.js"></script>
+
     <script>
         //
         // print a string to the page "console"
@@ -257,14 +273,53 @@
             prompt.parentNode.insertBefore(logRow, prompt);
         }
 
+        Object.assign(primitives, {
+            // io
+            println: ([x]) => consoleLog(x),
+        });
+
+        function addCheckbox(text, enabled, callback) {
+            const elem = document.createElement('input');
+            elem.type = 'checkbox';
+            elem.id = text;
+            elem.checked = enabled;
+            elem.onclick = callback;
+            const label = document.createElement('label');
+            label.for = text;
+            label.innerText = text;
+
+            const toolbar = document.querySelector('#toolbar');
+            toolbar.appendChild(elem);
+            toolbar.appendChild(label);
+        }
+
         document.onreadystatechange = function() {
 
             if (document.readyState === 'interactive') {
 
+                [pluginMetaPrimitives, pluginExtendedQuoting, pluginMacros, pluginControlFlow]
+                .forEach(plugin => {
+                    const pluginName = plugin.name.replace(/^plugin/, '');
+                    const enabled = localStorage.getItem(pluginName) === 'true';
+                    addCheckbox(pluginName, enabled, () => {
+                        localStorage.setItem(pluginName, !enabled);
+                        location.reload();
+                    });
+                    if (!enabled) return;
+                    consoleLog(`loading plugin ${pluginName}`);
+                    plugin(readerMacros, specialForms, primitives);
+                })
+
+                const replEnv = new Environment(primitives);
+                [
+                    `(def c (fn () "llisp is (c) Fabian Bergström 2021, https://opensource.org/licenses/MIT"))`,
+                    `(def thanks (fn () "Thanks, Mary Rose Cook: https://github.com/maryrosecook/littlelisp"))`,
+                ]
+                .forEach(f => eval(read(f), replEnv));
+
                 getBanner().forEach(consoleLog);
 
                 const readline = document.querySelector('#readline');
-                const replEnv = new Environment(primitives);
 
                 window.onkeypress = function(ev) {
                     if (ev.key === 'Enter') {
