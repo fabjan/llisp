@@ -24,8 +24,8 @@
                 currToken = [];
             }
 
-            const isSpace = (c) => (0 <= " \t".indexOf(c));
-            const isWholeToken = (c) => (0 <= "()".indexOf(c));
+            const isSpace = (c) => (0 <= " \t\r\n".indexOf(c));
+            const isWholeToken = (c) => (0 <= "()[]{}`',@".indexOf(c));
 
             for (const char of chars) {
                 if (char == '"') inQuotes = !inQuotes;
