@@ -131,7 +131,6 @@
         // Environment is a map from symbols to values, can be nested
         //
         function Environment(defs = {}, outer) {
-            this.names = () => Object.keys(defs);
             this.set = (symbol, value) => {
                 defs[symbol] = value;
             };
@@ -140,6 +139,7 @@
                 if (outer !== undefined) return outer.get(symbol);
             };
             this.push = () => new Environment({}, this);
+            this.names = () => Object.keys(defs);
         }
 
 
@@ -208,7 +208,7 @@
 
 
         //
-        // primitives are functions that cannot not be implemented i llisp itself
+        // primitives are functions that cannot not be implemented in llisp itself
         //
         Object.assign(primitives, {
             // logic
