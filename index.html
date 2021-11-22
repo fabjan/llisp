@@ -132,6 +132,7 @@
                 if (symbol in defs) return defs[symbol];
                 if (outer !== undefined) return outer.get(symbol);
             };
+            this.push = () => new Environment({}, this);
         }
 
 
@@ -180,15 +181,15 @@
             },
 
             let: ([bindings, body], env) => {
-                const letEnv = new Environment({}, env);
+                const letEnv = env.push();
                 bindings.forEach(([param, arg]) => letEnv.set(param, eval(arg, letEnv)));
                 return eval(body, letEnv);
             },
 
-            fn: ([params, body], env) => (...args) => {
-                const callEnv = new Environment({}, env);
-                params.forEach((param, i) => callEnv.set(param, args[i]));
-                return eval(body, callEnv);
+            fn: ([params, body], env) => (args, callEnv) => {
+                const applyEnv = callEnv.push();
+                params.forEach((param, i) => applyEnv.set(param, args[i]));
+                return eval(body, applyEnv);
             },
 
             def: ([symbol, ast], env) => {
@@ -316,7 +317,9 @@
                     plugin(readerMacros, specialForms, primitives);
                 });
 
-                const replEnv = new Environment(primitives);
+                const baseEnv = new Environment(primitives);
+                const replEnv = baseEnv.push();
+
                 [
                     `(def c (fn () "llisp is (c) Fabian Bergström 2021, https://opensource.org/licenses/MIT"))`,
                     `(def thanks (fn () "Thanks, Mary Rose Cook: https://github.com/maryrosecook/littlelisp"))`,
