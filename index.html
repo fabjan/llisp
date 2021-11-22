@@ -23,6 +23,7 @@
             const tokens = [];
             let currToken = [];
             let inQuotes = false;
+            let inComment = false;
 
             function pushCurrToken() {
                 if (0 < currToken.length) tokens.push(currToken.join(''));
@@ -35,6 +36,9 @@
 
             for (const char of chars) {
                 if (char == '"') inQuotes = !inQuotes;
+                if (char == ";") inComment = true;
+                if (char == "\n") inComment = false;
+                if (inComment) continue;
 
                 if (!inQuotes && isSpace(char)) pushCurrToken();
                 else if (!inQuotes && isWholeToken(char)) pushCurrToken(), tokens.push(char);
