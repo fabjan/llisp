@@ -330,11 +330,7 @@
                 const baseEnv = new Environment(primitives);
                 const replEnv = baseEnv.push();
 
-                [
-                    `(def c (fn () "llisp is (c) Fabian Bergström 2021, https://opensource.org/licenses/MIT"))`,
-                    `(def thanks (fn () "Thanks, Mary Rose Cook: https://github.com/maryrosecook/littlelisp"))`,
-                ]
-                .forEach(f => eval(read(f), replEnv));
+                getPrelude().forEach(f => eval(read(f), replEnv));
 
                 getBanner().forEach(consoleLog);
 
@@ -358,6 +354,12 @@
                 readline.focus();
             }
         };
+    </script>
+
+    <script>
+        function getPrelude() {
+            return document.querySelector('#prelude').textContent.split("\n");
+        }
     </script>
 
     <style>
@@ -386,8 +388,25 @@
 </head>
 
 <body>
+    <pre class=console id="prelude" style="display: none;">
+        (def c (fn () "llisp is (c) Fabian Bergström 2021, https://opensource.org/licenses/MIT"))
+        (def thanks (fn () "Thanks, Mary Rose Cook: https://github.com/maryrosecook/littlelisp"))
+        
+        ; let's define some standard functions
+        (def inc (fn (x) (+ x 1)))
+        ; this is annoying ... we need a macro
+        (defmacro defn (fn (name params body) `(def ,name (fn ,params ,body))))
+        (defn dec (x) (- x 1))
+        ; much nicer!
+        
+        (def nil '())
+        (defn nil? (l) (= nil l))
+        (defn map (f l) (if (= l '()) l (cons (f (car l)) (map f (cdr l)))))
+        
+        (def true 'true)
+        (def false 'false)
+    </pre>
     <div id="toolbar"></div>
-    <hr>
     <div class="console" id="prompt">
         <span>&gt;</span><span contenteditable="true" id="readline"></span>
     </div>
