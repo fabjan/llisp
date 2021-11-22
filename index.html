@@ -219,7 +219,7 @@
 
             // lists
             car: ([list]) => list[0],
-            cdr: ([list]) => list.slice(1),
+            cdr: ([list]) => 0 < list.length ? list.slice(1) : undefined,
             cons: ([head, tail]) => [head].concat(tail),
         });
 
