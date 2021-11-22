@@ -75,7 +75,7 @@
                         next();
                         const list = [];
                         while (peek() && peek() !== ')') list.push(nextForm());
-                        if (next() === undefined) throw new Error("unclosed '(");
+                        if (next() === undefined) throw new Error("unclosed '('");
                         return list;
                     default:
                         return isNaN(Number(peek())) ? next() : Number(next());
@@ -317,9 +317,11 @@
                         location.reload();
                     });
                     if (!enabled) return;
-                    consoleLog(`loading plugin ${pluginName}`);
+                    consoleLog(`🔧 loading plugin ${pluginName}`);
                     plugin(readerMacros, specialForms, primitives);
                 });
+
+                consoleLog(' ');
 
                 const baseEnv = new Environment(primitives);
                 const replEnv = baseEnv.push();
