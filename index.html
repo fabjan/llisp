@@ -210,7 +210,7 @@
         //
         Object.assign(primitives, {
             // logic
-            '=': ([a, b]) => a === b,
+            '=': ([a, b]) => JSON.stringify(a) === JSON.stringify(b),
             not: ([x]) => !x,
 
             // math
@@ -222,6 +222,7 @@
             cdr: ([list]) => list.slice(1),
             cons: ([head, tail]) => [head].concat(tail),
         });
+
 
         function getBanner() {
             const list = obj => Object.keys(obj).join(' ');
