@@ -186,7 +186,7 @@
                 return eval(body, letEnv);
             },
 
-            fn: ([params, body], env) => (args, callEnv) => {
+            fn: ([params, body], defEnv) => (args, callEnv) => {
                 const applyEnv = callEnv.push();
                 params.forEach((param, i) => applyEnv.set(param, args[i]));
                 return eval(body, applyEnv);
@@ -209,8 +209,8 @@
             not: ([x]) => !x,
 
             // math
-            '+': args => args.reduce((acc, x) => acc + x),
-            '-': args => args.reduce((acc, x) => acc - x),
+            '+': (args, _) => args.reduce((acc, x) => acc + x),
+            '-': (args, _) => args.reduce((acc, x) => acc - x),
 
             // lists
             car: ([list]) => list[0],

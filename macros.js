@@ -16,7 +16,7 @@ function pluginMacros(_, specialForms, _) {
     function macroExpand(ast, env) {
         const head = eval(ast[0], env);
         if (head && head.isMacro) {
-            return macroExpand(head(...ast.slice(1)), env);
+            return macroExpand(head(ast.slice(1), env), env);
         }
         return ast;
     }
