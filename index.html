@@ -6,6 +6,7 @@
     <script>
         // Based on https://github.com/maryrosecook/littlelisp
         // see copyright notice below.
+        // The code is primarily organized for presenting.
 
         // these are filled in below
         const readerMacros = {};
@@ -35,10 +36,11 @@
             const isWholeToken = (c) => (0 <= singleCharTokens.indexOf(c));
 
             for (const char of chars) {
-                if (char == '"') inQuotes = !inQuotes;
-                if (char == ";") inComment = true;
-                if (char == "\n") inComment = false;
+                if (char == ';') inComment = true;
+                if (char == '\n') inComment = false;
                 if (inComment) continue;
+
+                if (char == '"') inQuotes = !inQuotes;
 
                 if (!inQuotes && isSpace(char)) pushCurrToken();
                 else if (!inQuotes && isWholeToken(char)) pushCurrToken(), tokens.push(char);
