@@ -8,10 +8,10 @@
         // see copyright notice below.
         // The code is primarily organized for presenting.
 
-        // these are filled in below
-        const readerMacros = {};
-        const specialForms = {};
-        const primitives = {};
+        // These global mutable variables are filled in later, and by plugins.
+        const READER_MACROS = {};
+        const SPECIAL_FORMS = {};
+        const PRIMITIVES = {};
 
         //
         // lex turns a string into a list of tokens
@@ -67,8 +67,8 @@
             const next = () => tokens.shift();
 
             function nextForm() {
-                if (readerMacros[peek()]) {
-                    return readerMacros[next()](nextForm());
+                if (READER_MACROS[peek()]) {
+                    return READER_MACROS[next()](nextForm());
                 }
                 switch (peek()) {
                     case ')':
@@ -167,8 +167,8 @@
         //  - functions receive the arguments evaluated
         //
         function apply([head, ...tail], env) {
-            if (head in specialForms) {
-                return specialForms[head](tail, env);
+            if (head in SPECIAL_FORMS) {
+                return SPECIAL_FORMS[head](tail, env);
             }
             head = eval(head, env);
             if (head instanceof Function) {
@@ -181,7 +181,7 @@
         //
         // special forms have mystical powers, they can do anything
         //
-        Object.assign(specialForms, {
+        Object.assign(SPECIAL_FORMS, {
             if: ([cond, then, otherwise], env) => {
                 if (eval(cond, env)) return eval(then, env);
                 return eval(otherwise, env);
@@ -208,9 +208,9 @@
 
 
         //
-        // primitives are functions that cannot not be implemented in llisp itself
+        // PRIMITIVES are functions that cannot not be implemented in llisp itself
         //
-        Object.assign(primitives, {
+        Object.assign(PRIMITIVES, {
             // logic
             '=': ([a, b]) => JSON.stringify(a) === JSON.stringify(b),
             not: ([x]) => !x,
@@ -238,8 +238,8 @@
             banner.push("                                        ");
             banner.push("  Welcome to llisp!                     ");
             banner.push("                                        ");
-            banner.push(`    Special ····· ${list(specialForms)} `);
-            banner.push(`    Primitive ··· ${list(primitives)}   `);
+            banner.push(`    Special ····· ${list(SPECIAL_FORMS)}`);
+            banner.push(`    Primitive ··· ${list(PRIMITIVES)}   `);
             banner.push("                                        ");
             return banner;
         }
@@ -266,13 +266,12 @@
         }
     </script>
 
-    <script src="./meta.js"></script>
-    <script src="./quoting.js"></script>
-    <script src="./macros.js"></script>
-
+    <!--
+     --- Make a REPL and connect it to the page
+     -->
     <script>
         //
-        // print a string to the page "console"
+        // print a string to the HTML "console"
         //
         function consoleLog(line) {
             const prompt = document.querySelector('#prompt');
@@ -282,10 +281,87 @@
             prompt.parentNode.insertBefore(logRow, prompt);
         }
 
-        Object.assign(primitives, {
-            // io
+        //
+        // create an input reader from an HTML element
+        //
+        function textReader(elem) {
+            return () => {
+                const line = elem.textContent;
+                elem.textContent = '';
+                return line;
+            }
+        }
+
+        const REPL_ENV = (new Environment(PRIMITIVES)).push();
+
+        Object.assign(PRIMITIVES, {
             println: ([x]) => consoleLog(x),
         });
+
+        //
+        // `readInput` -> read -> eval -> print -> `writeOutput` 
+        //
+        function READ_EVAL_PRINT(readInput, writeOutput) {
+            const line = readInput();
+            try {
+                const ast = read(line);
+                const value = eval(ast, REPL_ENV);
+                const result = print(value);
+                writeOutput(' ' + line + ' => ' + result);
+            } catch (err) {
+                writeOutput('X' + line + ' =X ' + err.message);
+            }
+        }
+
+        window.onkeypress = function(ev) {
+            if (ev.key === 'Enter') {
+                // TODO command history
+                READ_EVAL_PRINT(textReader(readline), consoleLog);
+            }
+        };
+
+        document.onreadystatechange = function() {
+            if (document.readyState === 'interactive') {
+
+                // initialize the machine
+                loadPlugins();
+                consoleLog(' ');
+                getPrelude().forEach(s => READ_EVAL_PRINT(() => s, () => undefined));
+                getBanner().forEach(consoleLog);
+
+                const readline = document.querySelector('#readline');
+                readline.focus();
+            }
+        };
+    </script>
+
+    <!-- include plugins -->
+    <script src="./meta.js"></script>
+    <script src="./quoting.js"></script>
+    <script src="./macros.js"></script>
+
+    <!--
+     --- some scaffolding 
+     -->
+    <script>
+        function loadPlugins() {
+            [
+                pluginMetaPrimitives,
+                pluginExtendedQuoting,
+                pluginMacros,
+            ]
+            .forEach(plugin => {
+                const pluginName = plugin.name.replace(/^plugin/, '');
+                const enabled = localStorage.getItem(pluginName) === 'true';
+                addCheckbox(pluginName, enabled, () => {
+                    localStorage.setItem(pluginName, !enabled);
+                    location.reload();
+                });
+                if (!enabled) return;
+                consoleLog(`🔧 ${pluginName}`);
+                plugin(READER_MACROS, SPECIAL_FORMS, PRIMITIVES);
+            });
+        }
 
         function addCheckbox(text, enabled, callback) {
             const elem = document.createElement('input');
@@ -302,59 +378,6 @@
             toolbar.appendChild(label);
         }
 
-        document.onreadystatechange = function() {
-
-            if (document.readyState === 'interactive') {
-
-                [
-                    pluginMetaPrimitives,
-                    pluginExtendedQuoting,
-                    pluginMacros,
-                ]
-                .forEach(plugin => {
-                    const pluginName = plugin.name.replace(/^plugin/, '');
-                    const enabled = localStorage.getItem(pluginName) === 'true';
-                    addCheckbox(pluginName, enabled, () => {
-                        localStorage.setItem(pluginName, !enabled);
-                        location.reload();
-                    });
-                    if (!enabled) return;
-                    consoleLog(`🔧 loading plugin ${pluginName}`);
-                    plugin(readerMacros, specialForms, primitives);
-                });
-
-                consoleLog(' ');
-
-                const baseEnv = new Environment(primitives);
-                const replEnv = baseEnv.push();
-
-                getPrelude().forEach(f => eval(read(f), replEnv));
-
-                getBanner().forEach(consoleLog);
-
-                const readline = document.querySelector('#readline');
-
-                window.onkeypress = function(ev) {
-                    if (ev.key === 'Enter') {
-                        const line = readline.textContent;
-                        try {
-                            const ast = read(line);
-                            const value = eval(ast, replEnv);
-                            const result = print(value);
-                            consoleLog(' ' + line + ' => ' + result);
-                        } catch (err) {
-                            consoleLog('X' + line + ' =X ' + err.message);
-                        }
-                        readline.textContent = '';
-                    }
-                };
-
-                readline.focus();
-            }
-        };
-    </script>
-
-    <script>
         function getPrelude() {
             return document.querySelector('#prelude').textContent.split("\n");
         }
