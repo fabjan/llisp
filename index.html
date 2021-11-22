@@ -129,6 +129,7 @@
         // Environment is a map from symbols to values, can be nested
         //
         function Environment(defs = {}, outer) {
+            this.names = () => Object.keys(defs);
             this.set = (symbol, value) => {
                 defs[symbol] = value;
             };
