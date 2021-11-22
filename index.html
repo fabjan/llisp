@@ -269,7 +269,6 @@
     <script src="./meta.js"></script>
     <script src="./quoting.js"></script>
     <script src="./macros.js"></script>
-    <script src="./controlflow.js"></script>
 
     <script>
         //
@@ -311,7 +310,6 @@
                     pluginMetaPrimitives,
                     pluginExtendedQuoting,
                     pluginMacros,
-                    //pluginControlFlow,
                 ]
                 .forEach(plugin => {
                     const pluginName = plugin.name.replace(/^plugin/, '');
@@ -402,9 +400,6 @@
         (def nil '())
         (defn nil? (l) (= nil l))
         (defn map (f l) (if (= l '()) l (cons (f (car l)) (map f (cdr l)))))
-        
-        (def true 'true)
-        (def false 'false)
     </pre>
     <div id="toolbar"></div>
     <div class="console" id="prompt">
